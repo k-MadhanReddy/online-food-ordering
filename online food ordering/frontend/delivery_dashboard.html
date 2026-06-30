@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>🚚 Delivery Dashboard</h1>
+        <div class="navbar-links">
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Assigned Orders</h2>
+        <div id="orders-list" class="grid" style="margin-top: 20px;">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadAssignedOrders() {
+            const res = await fetch(`${API_URL}/delivery/orders`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const orders = await res.json();
+                const container = document.getElementById('orders-list');
+                
+                if (orders.length === 0) {
+                    container.innerHTML = '<p>No orders assigned to you yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <h3>Order #${o.O_ID}</h3>
+                        <p><strong>Customer:</strong> ${o.Customer_Name}</p>
+                        <p><strong>Phone:</strong> ${o.Customer_Phone}</p>
+                        <p><strong>Address:</strong> ${o.Delivery_Address}</p>
+                        <p><strong>Amount:</strong> ₹${o.Total_Amount.toFixed(2)}</p>
+                        <p><strong>Status:</strong> <span style="color:var(--primary)">${o.Order_Status}</span></p>
+                        
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            ${(o.Order_Status === 'Ready' || o.Order_Status === 'Preparing') ? 
+                                `<button class="btn btn-primary" onclick="updateStatus(${o.O_ID}, 'Picked Up')">Mark as Picked Up</button>` : ''}
+                            
+                            ${o.Order_Status === 'Picked Up' ? 
+                                `<button class="btn btn-primary" onclick="updateStatus(${o.O_ID}, 'Out for Delivery')">Out for Delivery</button>` : ''}
+                            
+                            ${o.Order_Status === 'Out for Delivery' ? 
+                                `<button class="btn btn-success" onclick="updateStatus(${o.O_ID}, 'Delivered')">Mark as Delivered</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function updateStatus(oId, newStatus) {
+            const res = await fetch(`${API_URL}/delivery/order/${oId}/status`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ Order_Status: newStatus })
+            });
+            if (res.ok) {
+                alert(`Order marked as ${newStatus}`);
+                loadAssignedOrders();
+            } else {
+                alert('Failed to update status');
+            }
+        }
+
+        loadAssignedOrders();
+        setInterval(loadAssignedOrders, 10000); // Auto refresh every 10s
+    </script>
+</body>
+</html>

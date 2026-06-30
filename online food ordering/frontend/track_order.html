@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Track Order</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='customer_dashboard.html'">← Home</h1>
+        <div class="navbar-links">
+            <button class="btn btn-secondary" onclick="window.location.href='my_orders.html'" style="background:var(--dark)">📦 My Orders</button>
+        </div>
+    </div>
+
+    <div class="form-container" style="text-align: center;">
+        <h2>Order Tracking</h2>
+        <p style="color:#666; margin-bottom: 20px;">Order #<span id="order-id-display"></span></p>
+
+        <div style="padding: 20px; background: var(--light); border-radius: 8px; margin-bottom: 20px;">
+            <h1 id="order-status" style="color: var(--dark); font-size: 28px;">Loading...</h1>
+        </div>
+
+        <div id="cancel-section" class="hidden" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <button class="btn btn-cancel" onclick="cancelOrder()" style="width: 100%;">Cancel Order</button>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const o_id = urlParams.get('o_id');
+        document.getElementById('order-id-display').textContent = o_id;
+
+        if (!o_id) {
+            window.location.href = 'customer_dashboard.html';
+        }
+
+        async function loadStatus() {
+            const res = await fetch(`${API_URL}/customer/order/${o_id}/status`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                const statusEl = document.getElementById('order-status');
+                statusEl.textContent = data.Order_Status;
+
+                if (data.Order_Status !== 'Delivered' && data.Order_Status !== 'Cancelled') {
+                    document.getElementById('cancel-section').classList.remove('hidden');
+                } else {
+                    document.getElementById('cancel-section').classList.add('hidden');
+                }
+
+                if (data.Order_Status === 'Cancelled') {
+                    statusEl.style.color = 'var(--danger)';
+                } else if (data.Order_Status === 'Delivered') {
+                    statusEl.style.color = 'var(--success)';
+                } else {
+                    statusEl.style.color = 'var(--primary)';
+                }
+            }
+        }
+
+        async function cancelOrder() {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            const res = await fetch(`${API_URL}/customer/order/${o_id}/cancel`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) {
+                alert('Order cancelled successfully.');
+                loadStatus();
+            } else {
+                const data = await res.json();
+                alert(data.detail || 'Failed to cancel order.');
+            }
+        }
+
+
+        loadStatus();
+        // Auto refresh status every 5 seconds
+        setInterval(loadStatus, 5000);
+    </script>
+</body>
+</html>

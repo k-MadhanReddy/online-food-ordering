@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurant Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>Restaurant Dashboard</h1>
+        <button class="btn btn-secondary" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+        <h2>Restaurant Overview</h2>
+        <div class="dashboard-stats" style="margin-bottom: 30px;">
+            <div class="stat-card"><h3>My Orders</h3><p id="total-orders">...</p></div>
+            <div class="stat-card"><h3>My Revenue</h3><p id="total-revenue">...</p></div>
+        </div>
+
+        <div class="flex-between">
+            <h2>Incoming Orders</h2>
+            <button class="btn btn-primary" onclick="loadOrders()" style="width:auto">Refresh Orders</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table-body">
+                <!-- Populated via JS -->
+            </tbody>
+        </table>
+
+        <div class="form-container" style="margin: 40px 0; max-width: 100%;">
+            <h2>Manage Night Discount</h2>
+            <form id="discount-form" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Discount Percentage (%)</label>
+                    <input type="number" id="discount-percentage" min="0" max="100" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Enable Discount</label>
+                    <div style="display: flex; align-items: center; height: 40px;">
+                        <input type="checkbox" id="is-discount-active" style="width: auto; margin-right: 10px;">
+                        <span>Active</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Start Time</label>
+                    <input type="time" id="discount-start-time" required>
+                </div>
+                <div class="form-group">
+                    <label>End Time</label>
+                    <input type="time" id="discount-end-time" required>
+                </div>
+                <div style="grid-column: span 2;">
+                    <button type="submit" class="btn btn-primary" style="width: auto; padding: 10px 30px;">Save Discount Settings</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-container" style="margin: 40px 0; max-width: 100%;">
+            <h2>Manage Menu Items</h2>
+            <form id="add-menu-item-form" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="menu-item-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="menu-item-category" required>
+                </div>
+                <div class="form-group">
+                    <label>Price (₹)</label>
+                    <input type="number" id="menu-item-price" step="0.01" required>
+                </div>
+                <div style="grid-column: span 3;">
+                    <button type="submit" class="btn btn-success" style="width: auto; padding: 10px 30px;">Add New Menu Item</button>
+                </div>
+            </form>
+
+            <table style="margin-top: 30px;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="menu-table-body">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadOrders() {
+            const res = await fetch(`${API_URL}/restaurant/orders`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const orders = await res.json();
+                const tbody = document.getElementById('orders-table-body');
+                
+                if (orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">No orders found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = orders.map(o => `
+                    <tr>
+                        <td>#${o.O_ID}</td>
+                        <td>₹${o.Total_Amount.toFixed(2)}</td>
+                        <td><strong>${o.Order_Status}</strong></td>
+                        <td>
+                            <select onchange="updateStatus(${o.O_ID}, this.value)" style="padding:5px; border-radius:4px">
+                                <option value="" disabled selected>Change Status...</option>
+                                <option value="Accepted">Accept</option>
+                                <option value="Rejected">Reject</option>
+                                <option value="Preparing">Preparing</option>
+                                <option value="Ready">Ready</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function updateStatus(orderId, status) {
+            if (!status) return;
+            const res = await fetch(`${API_URL}/restaurant/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ Order_Status: status })
+            });
+            if (res.ok) {
+                alert(`Order #${orderId} marked as ${status}`);
+                loadOrders();
+            } else {
+                alert('Failed to update order status');
+            }
+        }
+
+        async function loadAnalytics() {
+            const res = await fetch(`${API_URL}/restaurant/analytics`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('total-orders').textContent = data.Total_Orders;
+                document.getElementById('total-revenue').textContent = `₹${data.Total_Revenue.toFixed(2)}`;
+            }
+        }
+
+        async function loadMyMenu() {
+            const res = await fetch(`${API_URL}/restaurant/menu`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const menu = await res.json();
+                const tbody = document.getElementById('menu-table-body');
+                tbody.innerHTML = menu.map(item => `
+                    <tr>
+                        <td>${item.Food_Name}</td>
+                        <td>${item.Category}</td>
+                        <td>₹${item.Price.toFixed(2)}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="removeMenuItem(${item.Food_ID})">Remove</button></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        document.getElementById('add-menu-item-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const profileRes = await fetch(`${API_URL}/restaurant/profile`, { headers: getAuthHeaders() });
+            const profile = await profileRes.json();
+            
+            const body = {
+                R_ID: profile.R_ID,
+                Food_Name: document.getElementById('menu-item-name').value,
+                Category: document.getElementById('menu-item-category').value,
+                Price: parseFloat(document.getElementById('menu-item-price').value),
+                Availability: true
+            };
+
+            const res = await fetch(`${API_URL}/restaurant/menu`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                alert('Menu item added!');
+                e.target.reset();
+                loadMyMenu();
+            } else {
+                alert('Failed to add menu item');
+            }
+        });
+
+        async function removeMenuItem(foodId) {
+            if (!confirm('Are you sure you want to remove this item?')) return;
+            const res = await fetch(`${API_URL}/restaurant/menu/${foodId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) loadMyMenu();
+        }
+
+
+        async function loadDiscountSettings() {
+            const res = await fetch(`${API_URL}/restaurant/profile`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('discount-percentage').value = data.discount_percentage;
+                document.getElementById('is-discount-active').checked = data.is_discount_active;
+                if (data.discount_start_time) {
+                    document.getElementById('discount-start-time').value = data.discount_start_time.substring(0, 5);
+                }
+                if (data.discount_end_time) {
+                    document.getElementById('discount-end-time').value = data.discount_end_time.substring(0, 5);
+                }
+            }
+        }
+
+        document.getElementById('discount-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                percentage: parseFloat(document.getElementById('discount-percentage').value),
+                start_time: document.getElementById('discount-start-time').value + ':00',
+                end_time: document.getElementById('discount-end-time').value + ':00',
+                is_active: document.getElementById('is-discount-active').checked
+            };
+
+            const res = await fetch(`${API_URL}/restaurant/discount`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                alert('Discount settings updated successfully!');
+            } else {
+                alert('Failed to update discount settings');
+            }
+        });
+
+        loadOrders();
+        loadDiscountSettings();
+        loadAnalytics();
+        loadMyMenu();
+    </script>
+</body>
+</html>

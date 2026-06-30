@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='customer_dashboard.html'">← Back to Restaurants</h1>
+        <div class="navbar-links">
+            <button class="btn btn-primary" onclick="window.location.href='cart.html'" style="background:var(--success)">🛒 View Cart</button>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom: 20px;">📦 Order History</h2>
+        
+        <div id="orders-grid" class="grid">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadOrderHistory() {
+            const res = await fetch(`${API_URL}/customer/orders`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const orders = await res.json();
+                const grid = document.getElementById('orders-grid');
+                
+                if (orders.length === 0) {
+                    grid.innerHTML = '<p>You have not placed any orders yet.</p>';
+                    return;
+                }
+
+                grid.innerHTML = orders.map(o => `
+                    <div class="card">
+                        <div class="flex-between" style="margin-bottom: 10px;">
+                            <h3 style="margin:0">Order #${o.O_ID}</h3>
+                            <span style="font-size:12px; color:#666">${o.Date}</span>
+                        </div>
+                        <p style="margin-bottom:5px"><strong>Restaurant:</strong> ${o.Restaurant_Name}</p>
+                        <p style="margin-bottom:5px"><strong>Total:</strong> ₹${o.Final_Amount.toFixed(2)}</p>
+                        <p style="margin-bottom:15px"><strong>Status:</strong> <span style="color:var(--primary)">${o.Order_Status}</span></p>
+                        
+                        <button class="btn btn-primary" onclick="window.location.href='track_order.html?o_id=${o.O_ID}'" style="width:100%; margin-bottom:10px">Track Order</button>
+                        ${(o.Order_Status !== 'Delivered' && o.Order_Status !== 'Cancelled') ? 
+                            `<button class="btn btn-cancel" onclick="cancelOrder(${o.O_ID})" style="width:100%">Cancel Order</button>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                alert('Failed to load order history.');
+            }
+        }
+
+        async function cancelOrder(oId) {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            const res = await fetch(`${API_URL}/customer/order/${oId}/cancel`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) {
+                alert('Order cancelled successfully.');
+                loadOrderHistory();
+            } else {
+                const data = await res.json();
+                alert(data.detail || 'Failed to cancel order.');
+            }
+        }
+
+        loadOrderHistory();
+    </script>
+</body>
+</html>

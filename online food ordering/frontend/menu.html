@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Menu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='customer_dashboard.html'">← Back to Restaurants</h1>
+        <div class="navbar-links">
+            <button class="btn btn-secondary" onclick="window.location.href='my_orders.html'" style="background:var(--dark)">📦 My Orders</button>
+            <button class="btn btn-primary" onclick="window.location.href='cart.html'" style="background:var(--success)">🛒 View Cart</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 id="menu-title" style="margin-bottom: 20px;">Menu</h2>
+        <div id="menu-grid" class="grid">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const r_id = urlParams.get('r_id');
+        const r_name = urlParams.get('name');
+
+        if (r_name) document.getElementById('menu-title').textContent = `Menu - ${r_name}`;
+
+        async function loadMenu() {
+            if (!r_id) {
+                alert('No restaurant selected.');
+                window.location.href = 'customer_dashboard.html';
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/customer/restaurants/${r_id}/menu`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const menu = await res.json();
+                const grid = document.getElementById('menu-grid');
+                
+                if (menu.length === 0) {
+                    grid.innerHTML = '<p>No menu items available.</p>';
+                    return;
+                }
+
+                grid.innerHTML = menu.map(item => `
+                    <div class="card">
+                        <h3>${item.Food_Name}</h3>
+                        <p>${item.Category}</p>
+                        <p style="font-weight:bold; color:var(--primary)">₹${item.Price.toFixed(2)}</p>
+                        <button class="btn btn-primary" onclick="addToCart(${item.Food_ID})">Add to Cart</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function addToCart(food_id) {
+            const res = await fetch(`${API_URL}/customer/cart`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ Food_ID: food_id, Quantity: 1 })
+            });
+            if (res.ok) {
+                alert('Added to cart!');
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to add to cart');
+            }
+        }
+
+        loadMenu();
+    </script>
+</body>
+</html>

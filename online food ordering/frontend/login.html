@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Online Food Ordering</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="form-container">
+        <h2 class="text-center" style="margin-bottom: 20px;">Welcome Back</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Role</label>
+                <select id="role">
+                    <option value="customer">Customer</option>
+                    <option value="restaurant">Restaurant</option>
+                    <option value="admin">Administrator</option>
+                    <option value="delivery">Delivery Boy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" required placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <p id="error-msg" style="color: red; margin-top: 10px; display: none;"></p>
+        </form>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const role = document.getElementById('role').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    setToken(data.access_token);
+                    if (role === 'admin') window.location.href = 'admin_dashboard.html';
+                    else if (role === 'restaurant') window.location.href = 'restaurant_dashboard.html';
+                    else if (role === 'delivery') window.location.href = 'delivery_dashboard.html';
+                    else window.location.href = 'customer_dashboard.html';
+                } else {
+                    const error = await res.json();
+                    document.getElementById('error-msg').textContent = error.detail || 'Login failed';
+                    document.getElementById('error-msg').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('error-msg').textContent = 'Server connection error';
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

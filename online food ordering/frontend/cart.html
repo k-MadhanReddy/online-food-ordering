@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='customer_dashboard.html'">← Back to Restaurants</h1>
+        <div class="navbar-links">
+            <button class="btn btn-secondary" onclick="window.location.href='my_orders.html'" style="background:var(--dark)">📦 My Orders</button>
+        </div>
+    </div>
+
+    <div class="form-container" style="max-width: 600px;">
+        <h2 style="margin-bottom: 20px;">Your Cart</h2>
+        
+        <div id="cart-items">
+            <!-- Populated via JS -->
+        </div>
+
+        <div id="cart-summary" class="hidden" style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+            <div class="flex-between"><span>Subtotal:</span><span id="subtotal">₹0.00</span></div>
+            <div id="night-offer-badge" class="flex-between hidden" style="color:var(--primary); font-weight:bold;">
+                <span>🌙 Night Offer Applied:</span><span id="discount-amount">-₹0.00</span>
+            </div>
+            <div class="flex-between" style="font-size: 20px; font-weight: bold; margin-top: 10px;">
+                <span>Total:</span><span id="total-amount">₹0.00</span>
+            </div>
+            
+            <div id="payment-section" class="hidden" style="margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                <h4 style="margin-bottom: 10px;">Select Payment Method</h4>
+                <select id="payment-mode" class="form-group" style="width: 100%; padding: 8px; margin-bottom: 15px;">
+                    <option value="UPI">UPI (GPay/PhonePe)</option>
+                    <option value="Card">Credit/Debit Card</option>
+                    <option value="COD">Cash on Delivery</option>
+                </select>
+                <button id="pay-now-btn" class="btn btn-success" onclick="processCheckout()">Pay Now & Place Order</button>
+            </div>
+
+            <button id="proceed-btn" class="btn btn-primary" onclick="showPayment()" style="margin-top: 20px;">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadCart() {
+            const res = await fetch(`${API_URL}/customer/cart`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const cart = await res.json();
+                const itemsContainer = document.getElementById('cart-items');
+                const summary = document.getElementById('cart-summary');
+                
+                if (!cart.items || cart.items.length === 0) {
+                    itemsContainer.innerHTML = '<p>Your cart is empty.</p>';
+                    summary.classList.add('hidden');
+                    return;
+                }
+
+                // Group items by restaurant for display
+                const groups = {};
+                cart.items.forEach(item => {
+                    if (!groups[item.Restaurant_Name]) groups[item.Restaurant_Name] = [];
+                    groups[item.Restaurant_Name].push(item);
+                });
+
+                itemsContainer.innerHTML = Object.keys(groups).map(rName => `
+                    <div class="restaurant-group" style="margin-bottom: 20px;">
+                        <h4 style="color:var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">
+                            🏪 ${rName}
+                        </h4>
+                        ${groups[rName].map(item => `
+                            <div class="cart-item">
+                                <div>
+                                    <strong>${item.Food_Name}</strong>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                                        <button class="btn btn-secondary btn-small" onclick="updateQuantity(${item.Food_ID}, ${item.Quantity - 1})" style="width:28px; height:28px; padding:0; line-height:28px; display:flex; align-items:center; justify-content:center;">-</button>
+                                        <span style="font-weight:600; min-width:20px; text-align:center;">${item.Quantity}</span>
+                                        <button class="btn btn-secondary btn-small" onclick="updateQuantity(${item.Food_ID}, ${item.Quantity + 1})" style="width:28px; height:28px; padding:0; line-height:28px; display:flex; align-items:center; justify-content:center;">+</button>
+                                        <button class="btn btn-danger btn-small" onclick="removeItem(${item.Food_ID})" style="margin-left:auto; padding: 4px 10px;">Remove</button>
+                                    </div>
+                                </div>
+                                <div style="font-weight:bold">₹${item.Subtotal.toFixed(2)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+
+                summary.classList.remove('hidden');
+                document.getElementById('subtotal').textContent = `₹${cart.Total_Amount.toFixed(2)}`;
+                document.getElementById('total-amount').textContent = `₹${cart.Final_Amount.toFixed(2)}`;
+
+                const nightBadge = document.getElementById('night-offer-badge');
+                if (cart.Night_Offer_Applied) {
+                    nightBadge.classList.remove('hidden');
+                    document.getElementById('discount-amount').textContent = `-₹${cart.Discount_Amount.toFixed(2)}`;
+                } else {
+                    nightBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        async function updateQuantity(foodId, newQty) {
+            if (newQty < 0) return;
+            const res = await fetch(`${API_URL}/customer/cart/${foodId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ Food_ID: foodId, Quantity: newQty })
+            });
+            if (res.ok) loadCart();
+        }
+
+        async function removeItem(foodId) {
+            const res = await fetch(`${API_URL}/customer/cart/${foodId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) loadCart();
+        }
+
+        function showPayment() {
+            document.getElementById('payment-section').classList.remove('hidden');
+            document.getElementById('proceed-btn').classList.add('hidden');
+        }
+
+        async function processCheckout() {
+            const payBtn = document.getElementById('pay-now-btn');
+            const mode = document.getElementById('payment-mode').value;
+            
+            payBtn.textContent = 'Processing Payment...';
+            payBtn.disabled = true;
+
+            const res = await fetch(`${API_URL}/customer/checkout`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ Payment_Mode: mode })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                window.location.href = 'my_orders.html';
+            } else {
+                alert('Payment failed. Please try again.');
+                payBtn.textContent = 'Pay Now & Place Order';
+                payBtn.disabled = false;
+            }
+        }
+
+        loadCart();
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>Foodie Night Out</h1>
+        <div class="navbar-links">
+            <button class="btn btn-secondary" onclick="window.location.href='my_orders.html'" style="background:var(--dark)">📦 My Orders</button>
+            <button class="btn btn-primary" onclick="window.location.href='cart.html'" style="background:var(--success)">🛒 View Cart</button>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-bottom: 20px;">Browse Restaurants</h2>
+        <div id="restaurants-grid" class="grid">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadRestaurants() {
+            const res = await fetch(`${API_URL}/customer/restaurants`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const restaurants = await res.json();
+                const grid = document.getElementById('restaurants-grid');
+                
+                if (restaurants.length === 0) {
+                    grid.innerHTML = '<p>No restaurants available right now.</p>';
+                    return;
+                }
+
+                grid.innerHTML = restaurants.map(r => `
+                    <div class="card">
+                        <h3>${r.Name}</h3>
+                        <p>📍 ${r.Location}</p>
+                        <p>⭐️ ${r.Rating ? r.Rating : 'New!'}</p>
+                        <button class="btn btn-primary" onclick="window.location.href='menu.html?r_id=${r.R_ID}&name=${encodeURIComponent(r.Name)}'">View Menu</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        loadRestaurants();
+    </script>
+</body>
+</html>

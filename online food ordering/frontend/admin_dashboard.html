@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>Admin Dashboard</h1>
+        <button class="btn btn-secondary" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+        <h2>Platform Overview</h2>
+        <div class="dashboard-stats" id="stats-container">
+            <div class="stat-card"><h3>Total Users</h3><p id="total-users">...</p></div>
+            <div class="stat-card"><h3>Total Restaurants</h3><p id="total-restaurants">...</p></div>
+            <div class="stat-card"><h3>Total Delivery Boys</h3><p id="total-delivery">...</p></div>
+            <div class="stat-card"><h3>Total Orders</h3><p id="total-orders">...</p></div>
+            <div class="stat-card"><h3>Total Revenue</h3><p id="total-revenue">...</p></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div class="form-container" style="margin:0; max-width:100%">
+                <h3>Add New Restaurant</h3>
+                <form id="addRestaurantForm" style="margin-top:15px">
+                    <input type="text" id="r_name" placeholder="Restaurant Name" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="email" id="r_email" placeholder="Login Email" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="password" id="r_password" placeholder="Login Password" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="r_location" placeholder="Location" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="r_phone" placeholder="Phone" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <button type="submit" class="btn btn-primary">Add Restaurant</button>
+                </form>
+            </div>
+
+            <div class="form-container" style="margin:0; max-width:100%">
+                <h3>Add New Customer</h3>
+                <form id="addCustomerForm" style="margin-top:15px">
+                    <input type="text" id="c_name" placeholder="Full Name" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="email" id="c_email" placeholder="Email" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="password" id="c_password" placeholder="Password" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="c_phone" placeholder="Phone" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="c_address" placeholder="Address" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="c_city" placeholder="City" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <input type="text" id="c_pincode" placeholder="Pincode" required class="form-group" style="width:100%; padding:8px; margin-bottom:10px">
+                    <button type="submit" class="btn btn-success">Add Customer</button>
+                </form>
+            </div>
+
+            <div class="form-container" style="margin:0; max-width:100%; grid-column: span 2;">
+                <h3>Add New Delivery Boy</h3>
+                <form id="addDeliveryForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top:15px">
+                    <input type="text" id="d_name" placeholder="Name" required class="form-group" style="width:100%; padding:8px;">
+                    <input type="email" id="d_email" placeholder="Email" required class="form-group" style="width:100%; padding:8px;">
+                    <input type="password" id="d_password" placeholder="Password" required class="form-group" style="width:100%; padding:8px;">
+                    <input type="text" id="d_phone" placeholder="Phone" required class="form-group" style="width:100%; padding:8px;">
+                    <button type="submit" class="btn btn-primary" style="grid-column: span 2;">Register Delivery Personnel</button>
+                </form>
+            </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px;">
+            <div class="form-container" style="margin:0; max-width:100%">
+                <h3>Manage Restaurants</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="restaurants-list">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-container" style="margin:0; max-width:100%">
+                <h3>Manage Customers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-list">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-container" style="margin:0; max-width:100%">
+                <h3>Manage Delivery Boys</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="delivery-list">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+
+        <div class="form-container" style="margin-top:40px; max-width:100%">
+            <h3>Manage Active Orders & Assign Delivery</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Restaurant</th>
+                        <th>Status</th>
+                        <th>Delivery Person</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="active-orders-list">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadReports() {
+            try {
+                const res = await fetch(`${API_URL}/admin/reports`, { headers: getAuthHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log("Admin Dashboard Data:", data);
+                    document.getElementById('total-users').textContent = data.Total_Users ?? 0;
+                    document.getElementById('total-restaurants').textContent = data.Total_Restaurants ?? 0;
+                    document.getElementById('total-delivery').textContent = data.Total_Delivery_Personnel ?? 0;
+                    document.getElementById('total-orders').textContent = data.Total_Orders ?? 0;
+                    document.getElementById('total-revenue').textContent = `₹${(data.Total_Revenue ?? 0).toFixed(2)}`;
+                } else {
+                    ["total-users", "total-restaurants", "total-delivery", "total-orders"].forEach(id => document.getElementById(id).textContent = '0');
+                    document.getElementById('total-revenue').textContent = '₹0.00';
+                }
+            } catch (err) {
+                console.error("Dashboard Fetch Error:", err);
+                ["total-users", "total-restaurants", "total-delivery", "total-orders"].forEach(id => document.getElementById(id).textContent = '0');
+                document.getElementById('total-revenue').textContent = '₹0.00';
+            }
+        }
+
+        async function loadEntities() {
+            console.log("Loading entities...");
+            // Load Restaurants
+            const restRes = await fetch(`${API_URL}/admin/restaurants`, { headers: getAuthHeaders() });
+            if (restRes.ok) {
+                const data = await restRes.json();
+                document.getElementById('restaurants-list').innerHTML = data.map(r => `
+                    <tr>
+                        <td>${r.Name}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="deleteRestaurant(${r.R_ID})">Delete</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Customers
+            const custRes = await fetch(`${API_URL}/admin/users`, { headers: getAuthHeaders() });
+            if (custRes.ok) {
+                const data = await custRes.json();
+                document.getElementById('customers-list').innerHTML = data.map(c => `
+                    <tr>
+                        <td>${c.Name}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="deleteCustomer(${c.C_ID})">Delete</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Delivery Boys
+            const delRes = await fetch(`${API_URL}/admin/delivery`, { headers: getAuthHeaders() });
+            if (delRes.ok) {
+                const data = await delRes.json();
+                document.getElementById('delivery-list').innerHTML = data.map(d => `
+                    <tr>
+                        <td>${d.Name}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="deleteDelivery(${d.D_ID})">Delete</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Load Active Orders & Delivery Boys for Assignment
+            const [ordersData, deliveryData] = await Promise.all([
+                fetch(`${API_URL}/admin/orders`, { headers: getAuthHeaders() }).then(r => r.json()),
+                fetch(`${API_URL}/admin/delivery`, { headers: getAuthHeaders() }).then(r => r.json())
+            ]);
+
+            document.getElementById('active-orders-list').innerHTML = ordersData.map(o => `
+                <tr>
+                    <td>#${o.O_ID}</td>
+                    <td>${o.Restaurant_Name}</td>
+                    <td>${o.Order_Status}</td>
+                    <td>${o.Delivery_Name}</td>
+                    <td>
+                        ${o.D_ID ? '<span style="color:var(--success); font-weight:bold;">Assigned</span>' : `
+                            <select id="assign-select-${o.O_ID}" class="btn-small" style="width:120px">
+                                <option value="">Select Delivery</option>
+                                ${deliveryData.map(d => `<option value="${d.D_ID}">${d.Name}</option>`).join('')}
+                            </select>
+                            <button class="btn btn-success btn-small" onclick="assignOrder(${o.O_ID})">Assign</button>
+                        `}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function deleteRestaurant(id) {
+            if (!confirm('Are you sure?')) return;
+            const res = await fetch(`${API_URL}/admin/restaurants/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (res.ok) { loadEntities(); loadReports(); }
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm('Are you sure?')) return;
+            const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (res.ok) { loadEntities(); loadReports(); }
+        }
+
+        async function deleteDelivery(id) {
+            if (!confirm('Are you sure?')) return;
+            const res = await fetch(`${API_URL}/admin/delivery/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+            if (res.ok) { loadEntities(); loadReports(); }
+        }
+
+        async function assignOrder(oId) {
+            const dId = document.getElementById(`assign-select-${oId}`).value;
+            if (!dId) return alert('Select delivery person');
+            const res = await fetch(`${API_URL}/admin/order/${oId}/assign/${dId}`, { method: 'PUT', headers: getAuthHeaders() });
+            if (res.ok) { 
+                alert('Assigned!'); 
+                loadEntities(); 
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to assign order');
+            }
+        }
+
+        document.getElementById('addRestaurantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                Name: document.getElementById('r_name').value,
+                Email: document.getElementById('r_email').value,
+                Password: document.getElementById('r_password').value,
+                Location: document.getElementById('r_location').value,
+                Phone_Number: document.getElementById('r_phone').value,
+                Rating: 0.0
+            };
+            const res = await fetch(`${API_URL}/admin/restaurants`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) });
+            if (res.ok) {
+                alert('Added!'); e.target.reset(); loadEntities(); loadReports();
+            } else alert('Error adding restaurant');
+        });
+
+        document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                Name: document.getElementById('c_name').value,
+                Email: document.getElementById('c_email').value,
+                Password: document.getElementById('c_password').value,
+                Mobile_No: document.getElementById('c_phone').value,
+                Address: document.getElementById('c_address').value,
+                City: document.getElementById('c_city').value,
+                Pincode: document.getElementById('c_pincode').value
+            };
+            const res = await fetch(`${API_URL}/admin/customers`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) });
+            if (res.ok) {
+                alert('Added!'); e.target.reset(); loadEntities(); loadReports();
+            } else alert('Error adding customer');
+        });
+
+        document.getElementById('addDeliveryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                Name: document.getElementById('d_name').value,
+                Email: document.getElementById('d_email').value,
+                Password: document.getElementById('d_password').value,
+                Phone_Number: document.getElementById('d_phone').value
+            };
+            const res = await fetch(`${API_URL}/admin/delivery`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) });
+            if (res.ok) {
+                alert('Added!'); e.target.reset(); loadEntities(); loadReports();
+            } else alert('Error adding delivery personnel');
+        });
+
+        loadReports();
+        loadEntities();
+        // Auto-refresh every 30 seconds
+        setInterval(() => { loadReports(); loadEntities(); }, 30000);
+    </script>
+</body>
+</html>
